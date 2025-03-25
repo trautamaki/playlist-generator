@@ -28,7 +28,7 @@ public class ScoredSong : BaseItem
     private double CalculateScore(double decayRate = 0.5, List<double>? weights = null, int minPlayThreshold = 3)
     {
         weights ??= [0.4, 0.35, 0.25];
-        var userData = _userDataManager.GetUserData(User.Id, Song);
+        var userData = _userDataManager.GetUserData(User, Song);
 
         // songs that the user barely knows (below the minPlayThreshold) should get a score of zero
         if (userData.PlayCount < minPlayThreshold)

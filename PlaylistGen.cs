@@ -77,13 +77,22 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
         
         // first get all songs
         var songList = new List<ScoredSong>();
-        var SongQuery = new InternalItemsQuery{IncludeItemTypes = [BaseItemKind.Audio]};
-        
-        var songs = _libraryManager.GetItemList(SongQuery);
+        var SongQuery = new InternalItemsQuery{IncludeItemTypes = [BaseItemKind.Audio], Recursive = true};
+
+        var allAudio = _libraryManager.GetItemList(SongQuery);
+
+        if (allAudio.Count <= 0)
+        {
+            _logger.LogWarning("No music found.");
+            return Task.CompletedTask;
+        }
+
+        // filter out theme songs and songs that are too short
+        var songs = allAudio.Where(song => song.IsThemeMedia == false && (int)((long)(song.RunTimeTicks ?? 0) / 10_000_000) > _config.ExcludeTime).ToList();
 
         if (songs.Count <= 0)
         {
-            _logger.LogWarning("No music found.");
+            _logger.LogWarning("No music found after filtering.");
             return Task.CompletedTask;
         }
 

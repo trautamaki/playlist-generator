@@ -16,6 +16,7 @@ public class PluginConfiguration : BasePluginConfiguration
         PlaylistDuration = 360;
         PlaylistUserName = "username";
         ExplorationCoefficient = 3;
+        ExcludeTime = 0;
     }
 
     public int PlaylistDuration { get; set; }
@@ -25,4 +26,6 @@ public class PluginConfiguration : BasePluginConfiguration
     public string PlaylistUserName { get; set; }
 
     public double ExplorationCoefficient { get; set; }
+
+    public int ExcludeTime { get; set; }
 }
