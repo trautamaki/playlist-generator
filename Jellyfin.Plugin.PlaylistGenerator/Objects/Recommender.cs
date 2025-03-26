@@ -36,6 +36,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         HashSet<Guid> allArtists = [];
         foreach (var song in songBasis)
         {
+            if (song.ArtistId == Guid.Empty) continue;
             allArtists.Add(song.ArtistId);
         }
 
@@ -47,7 +48,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         };
 
         var similarSongs = libraryManager.GetItemList(query);
-        List<ScoredSong> potentialSongs = similarSongs.Select(song => 
+        var potentialSongs = similarSongs.Select(song => 
             new ScoredSong(song, user, userDataManager, libraryManager)).ToList();
         potentialSongs = FilterByExploration(potentialSongs);
         recommendations.AddRange(potentialSongs);

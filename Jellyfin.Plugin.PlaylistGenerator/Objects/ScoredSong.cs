@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Entities;
 using Jellyfin.Data.Entities;
@@ -32,6 +33,10 @@ public class ScoredSong : BaseItem
     // get artist id from album id
     private Guid GetAristId(BaseItem song)
     {
+        if (song.ParentId == Guid.Empty)
+        {
+            return Guid.Empty;
+        }
         var album = _libraryManager.GetItemById(song.ParentId) as MusicAlbum;
         return album == null ? Guid.Empty : _libraryManager.GetArtist(album.AlbumArtist).Id;
     }
