@@ -1,5 +1,16 @@
 # Playlist Generator
 
+<div align="center">
+ <p>
+    <img src="https://raw.githubusercontent.com/Eeeeelias/playlist-generator/refs/heads/main/images/logo.png" 
+    alt="Plugin Banner" />
+</p>
+<p>
+    Create personal playlists based on your listening history.
+</p>
+
+</div>
+
 ### Manifest url
 ```bash
 https://raw.githubusercontent.com/Eeeeelias/playlist-generator/refs/heads/main/manifest.json
