@@ -1,6 +1,6 @@
 using MediaBrowser.Model.Plugins;
 
-namespace PlaylistGenerator.Configuration
+namespace PlaylistGenerator.PlaylistGenerator.Configuration
 {
     public class PluginConfiguration : BasePluginConfiguration
     {

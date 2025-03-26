@@ -1,4 +1,4 @@
-using PlaylistGenerator.Configuration;
+using PlaylistGenerator.PlaylistGenerator.Configuration;
 using Microsoft.Extensions.Logging;
 using MediaBrowser.Model.Tasks;
 using MediaBrowser.Controller.Library;
@@ -7,9 +7,9 @@ using MediaBrowser.Controller.Entities;
 using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Playlists;
-using PlaylistGenerator.Objects;
+using PlaylistGenerator.PlaylistGenerator.Objects;
 
-namespace PlaylistGenerator.Tasks;
+namespace PlaylistGenerator.PlaylistGenerator.Tasks;
 
 public class PlaylistGenerationTask(ILibraryManager libraryManager, 
                                     IUserManager userManager, 

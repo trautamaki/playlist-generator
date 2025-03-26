@@ -1,11 +1,11 @@
-using PlaylistGenerator.Configuration;
+using PlaylistGenerator.PlaylistGenerator.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace PlaylistGenerator;
+namespace PlaylistGenerator.PlaylistGenerator;
 
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {

@@ -3,7 +3,7 @@ using MediaBrowser.Controller.Entities;
 using Jellyfin.Data.Entities;
 
 
-namespace PlaylistGenerator.Objects;
+namespace PlaylistGenerator.PlaylistGenerator.Objects;
 
 // class for giving a song a score based on the user
 public class ScoredSong : BaseItem

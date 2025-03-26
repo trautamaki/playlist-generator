@@ -7,7 +7,7 @@ using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using System.Collections;
 
-namespace PlaylistGenerator.Objects;
+namespace PlaylistGenerator.PlaylistGenerator.Objects;
 
 // Service to create and delete playlists
 public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager libraryManager)

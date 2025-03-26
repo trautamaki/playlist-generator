@@ -5,7 +5,7 @@ using Jellyfin.Data.Entities;
 
 using Jellyfin.Data.Enums;
 
-namespace PlaylistGenerator.Objects;
+namespace PlaylistGenerator.PlaylistGenerator.Objects;
 
 
 public class Recommender(ILibraryManager libraryManager, IUserDataManager userDataManager, double explorationCoefficient = 3)
