@@ -6,6 +6,7 @@
     "description": "Uses your listening history to generate a daily playlist of songs you might like",
     "owner": "Eeeeelias",
     "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/Eeeeelias/playlist-generator/refs/heads/main/images/logo.png",
     "versions": [
       {
         "version": "1.0.0.0",
