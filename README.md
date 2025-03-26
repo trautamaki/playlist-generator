@@ -28,3 +28,12 @@ Specified in seconds
 `Playlist User` - The username of the user to create the playlist for. Currently playlists can be created only for one user.
 I plan on expanding on this later.  
 `Exploration Coefficient` - The higher the value, the more the recommender will prefer unknown songs.
+
+### Open issues
+- Penalise skipped songs: Currently, if Playback Reporting adds an entry of a song, it'll count as a play. 
+However, if that song has been skipped (low playtime), it is more likely to indicate that the user does not 
+want to listen to that song. It should thus be penalised.
+- Add favourite songs: The original jellyfin music script adds 0-5 favourite songs to the playlist.
+- Minimum song length is only considered for the first song retrieval. Songs that are added later on are not 
+checked for their length.
+- Create a playlist image: Maybe we can create a playlist image based on the songs in the playlist.
