@@ -27,7 +27,7 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
 
     public string Name => "Generate Personal Playlist";
     public string Key => "PlaylistGenerationTask";
-    public string Description => "Generate a library based on previous listen data + similarity.";
+    public string Description => "Generate a playlist based on previous listen data + similarity.";
     public string Category => "Library";
 
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
