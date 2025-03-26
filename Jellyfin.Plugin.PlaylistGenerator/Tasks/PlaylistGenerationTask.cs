@@ -8,6 +8,8 @@ using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Playlists;
 using Jellyfin.Plugin.PlaylistGenerator.Objects;
+using MediaBrowser.Controller;
+using MediaBrowser.Model.IO;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Tasks;
 
@@ -15,14 +17,21 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
                                     IUserManager userManager, 
                                     IUserDataManager userDataManager, 
                                     ILogger<PlaylistGenerationTask> logManager,
-                                    IPlaylistManager playlistManager) : IScheduledTask
+                                    IPlaylistManager playlistManager,
+                                    IServerApplicationPaths applicationPaths,
+                                    IFileSystem fileSystem
+                                    ) : IScheduledTask
 {
-    private readonly ILibraryManager _libraryManager = libraryManager;
-    private readonly ILogger<PlaylistGenerationTask> _logger = logManager;
     private static PluginConfiguration Config => Plugin.Instance?.Configuration ?? new PluginConfiguration();
+    private readonly ILibraryManager _libraryManager = libraryManager;
     private readonly IUserManager _userManager = userManager;
     private readonly IUserDataManager _userDataManager = userDataManager;
     private readonly IPlaylistManager _playlistManager = playlistManager;
+    private readonly ILogger<PlaylistGenerationTask> _logger = logManager;
+    private readonly IServerApplicationPaths _paths = applicationPaths;
+    private readonly IFileSystem _fileSystem = fileSystem;
+    private ActivityDatabase _activityDatabase = null!;
+
 
 
     public string Name => "Generate Personal Playlist";
@@ -32,7 +41,17 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
 
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested(); 
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
+        {
+            _activityDatabase = new ActivityDatabase(_logger, _paths, _fileSystem, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while generating the playlist.");
+            return Task.CompletedTask;
+        }
 
         _logger.LogInformation($"Start generating playlist with Exploration {Config.ExplorationCoefficient} " +
                                $"for {Config.PlaylistUserName}");
@@ -74,12 +93,12 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            songList.Add(new ScoredSong(song, currentUser, _userDataManager, _libraryManager));
+            songList.Add(new ScoredSong(song, currentUser, _userDataManager, _libraryManager, _activityDatabase));
         }
 
         // initialise the Recommenders and get some recommendations based on our top
         PlaylistService playlistServer = new(_playlistManager, _libraryManager);
-        Recommender playlistRecommender = new(_libraryManager, _userDataManager, Config.ExplorationCoefficient);
+        Recommender playlistRecommender = new(_libraryManager, _userDataManager, _activityDatabase, Config.ExplorationCoefficient);
 
         List<ScoredSong> topSongs = [.. songList.OrderByDescending(song => song.Score).Take(20)];
         var similarBySong = playlistRecommender.RecommendSimilar(topSongs, currentUser);

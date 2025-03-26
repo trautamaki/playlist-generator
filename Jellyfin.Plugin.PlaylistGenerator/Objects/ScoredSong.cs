@@ -3,7 +3,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Entities;
 using Jellyfin.Data.Entities;
 using MediaBrowser.Controller.Entities.Audio;
-
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Objects;
 
@@ -12,6 +12,9 @@ public class ScoredSong : BaseItem
 {
     private readonly IUserDataManager _userDataManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly ActivityDatabase _activityDatabase;
+    
+    private readonly int _maxPlaysSevenDays; 
     
     public BaseItem Song { get; set; }
     private User User { get; set; }
@@ -19,15 +22,33 @@ public class ScoredSong : BaseItem
     public Guid AlbumId { get; set; }
     public Guid ArtistId { get; set; }
 
-    public ScoredSong(BaseItem song, User user, IUserDataManager userDataManager, ILibraryManager libraryManager)
+    public ScoredSong(BaseItem song, User user, IUserDataManager userDataManager, ILibraryManager libraryManager, 
+        ActivityDatabase activityDatabase)
     {
         _userDataManager = userDataManager;
         _libraryManager = libraryManager;
+        _activityDatabase = activityDatabase;
         Song = song;
         User = user;
         Score = CalculateScore();
         AlbumId = song.ParentId;
         ArtistId = GetAristId(song);
+        _maxPlaysSevenDays = _activityDatabase.MaxSevenDays;
+    }
+    
+    private int GetNormalizedPlaysSevenDays()
+    {
+        if (Song.Id == Guid.Empty || User.Id == Guid.Empty || _maxPlaysSevenDays == 0)
+        {
+            return 0;
+        }
+        var sql = $"""
+                  SELECT COUNT(*) FROM PlaybackActivity
+                  WHERE ItemId = '{Song.Id}' AND UserId = '{User.Id}' AND DateCreated > datetime('now', '-7 days')
+                  """;
+        var result = _activityDatabase.ExecuteQuery(sql);
+        var plays = result.Count > 0 ? int.Parse(result[0]["Column0"]) : 0;
+        return plays / _maxPlaysSevenDays;
     }
     
     // get artist id from album id
@@ -43,7 +64,7 @@ public class ScoredSong : BaseItem
 
     private double CalculateScore(double decayRate = 0.5, List<double>? weights = null, int minPlayThreshold = 3)
     {
-        weights ??= [0.4, 0.35, 0.25];
+        weights ??= [0.6, 0.25, 0.15];
         var userData = _userDataManager.GetUserData(User, Song);
 
         // songs that the user barely knows (below the minPlayThreshold) should get a score of zero
@@ -51,13 +72,8 @@ public class ScoredSong : BaseItem
         {
             return 0.0;
         }
-
-        // information about if the user likes this song
-        var favourite = 0.0;
-        if (userData.IsFavorite)
-        {
-            favourite = 1.0;
-        }
+        
+        var frequency = GetNormalizedPlaysSevenDays();
 
         // how long it's been since they last listened to it
         double recency = 0;
@@ -69,8 +85,8 @@ public class ScoredSong : BaseItem
         }
         
         // songs that have been listened to a lot may not be super wanted anymore
-        var highPlayDecay = 1 / 1+ Math.Log(-2 + userData.PlayCount, 2); 
+        var highPlayDecay = 1 / (1 + Math.Log(-2 + userData.PlayCount, 2)); 
 
-        return weights[0] * favourite + weights[1] * recency + weights[2] * highPlayDecay;
+        return weights[0] * frequency + weights[1] * recency + weights[2] * highPlayDecay;
     }
 }

@@ -8,7 +8,8 @@ using Jellyfin.Data.Enums;
 namespace Jellyfin.Plugin.PlaylistGenerator.Objects;
 
 
-public class Recommender(ILibraryManager libraryManager, IUserDataManager userDataManager, double explorationCoefficient = 3)
+public class Recommender(ILibraryManager libraryManager, IUserDataManager userDataManager, 
+    ActivityDatabase activityDatabase, double explorationCoefficient = 3)
 {
     public List<ScoredSong> RecommendSimilar(List<ScoredSong> songBasis, User user)
     {
@@ -24,7 +25,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
 
             var similarSongs = libraryManager.GetItemList(query);
             recommendations.AddRange(similarSongs.Select(song => 
-                new ScoredSong(song, user, userDataManager, libraryManager)).ToList());
+                new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList());
         }
         return recommendations;
     }
@@ -49,7 +50,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
 
         var similarSongs = libraryManager.GetItemList(query);
         var potentialSongs = similarSongs.Select(song => 
-            new ScoredSong(song, user, userDataManager, libraryManager)).ToList();
+            new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList();
         potentialSongs = FilterByExploration(potentialSongs);
         recommendations.AddRange(potentialSongs);
 
@@ -75,7 +76,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
 
         var similarSongs = libraryManager.GetItemList(query);
         var potentialSongs = similarSongs.Select(song => 
-            new ScoredSong(song, user, userDataManager, libraryManager)).ToList();
+            new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList();
         potentialSongs = FilterByExploration(potentialSongs);
 
         recommendations.AddRange(potentialSongs);
