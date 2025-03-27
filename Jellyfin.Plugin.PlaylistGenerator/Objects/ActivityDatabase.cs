@@ -29,6 +29,7 @@ public class ActivityDatabase
             _dbConnection = SQLite3.Open(DbFilePath, ConnectionFlags.ReadOnly, null);
             _logger.LogInformation("Opened Playback Reporting database: {DbFilePath}", DbFilePath);
             MaxSevenDays = MaxPlaysSevenDays();
+            _logger.LogInformation($"Most played song in the last 7 days: {MaxSevenDays}");
         }
         catch (Exception ex)
         {
@@ -59,8 +60,6 @@ public class ActivityDatabase
                 }
                 resultList.Add(rowDict);
             }
-
-            _logger.LogInformation($"Got {resultList.Count} records from playback reporting database.");
             return resultList;
         }
         catch (Exception ex)

@@ -14,7 +14,7 @@ public class ScoredSong : BaseItem
     private readonly ILibraryManager _libraryManager;
     private readonly ActivityDatabase _activityDatabase;
     
-    private readonly int _maxPlaysSevenDays; 
+    private int MaxPlaysSevenDays => _activityDatabase.MaxSevenDays;
     
     public BaseItem Song { get; set; }
     private User User { get; set; }
@@ -33,22 +33,28 @@ public class ScoredSong : BaseItem
         Score = CalculateScore();
         AlbumId = song.ParentId;
         ArtistId = GetAristId(song);
-        _maxPlaysSevenDays = _activityDatabase.MaxSevenDays;
     }
     
-    private int GetNormalizedPlaysSevenDays()
+    private double GetNormalizedPlaysSevenDays()
     {
-        if (Song.Id == Guid.Empty || User.Id == Guid.Empty || _maxPlaysSevenDays == 0)
+        if (Song.Id == Guid.Empty || User.Id == Guid.Empty || MaxPlaysSevenDays == 0)
         {
             return 0;
         }
+        var songLengthSeconds = Song.RunTimeTicks / TimeSpan.TicksPerSecond;
         var sql = $"""
-                  SELECT COUNT(*) FROM PlaybackActivity
-                  WHERE ItemId = '{Song.Id}' AND UserId = '{User.Id}' AND DateCreated > datetime('now', '-7 days')
+                  SELECT PlayDuration FROM PlaybackActivity
+                  WHERE ItemId = '{Song.Id:N}' AND UserId = '{User.Id:N}' AND DateCreated > datetime('now', '-7 days')
                   """;
         var result = _activityDatabase.ExecuteQuery(sql);
-        var plays = result.Count > 0 ? int.Parse(result[0]["Column0"]) : 0;
-        return plays / _maxPlaysSevenDays;
+        var plays = 0;
+        foreach (var row in result)
+        {
+            plays += int.Parse(row["Column0"]) >= songLengthSeconds * 0.8 ? 1 : -1;
+        }
+        plays = Math.Max(plays, 0);
+        Console.WriteLine($"Plays: {plays}, Normalized: {(double)plays / MaxPlaysSevenDays}");
+        return (double)plays / MaxPlaysSevenDays;
     }
     
     // get artist id from album id
@@ -85,7 +91,7 @@ public class ScoredSong : BaseItem
         }
         
         // songs that have been listened to a lot may not be super wanted anymore
-        var highPlayDecay = 1 / (1 + Math.Log(-2 + userData.PlayCount, 2)); 
+        var highPlayDecay = 1 / (1 + Math.Log(-2 + userData.PlayCount, 2));
 
         return weights[0] * frequency + weights[1] * recency + weights[2] * highPlayDecay;
     }
