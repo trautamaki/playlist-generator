@@ -85,14 +85,13 @@ public class ScoredSong : BaseItem
         double recency = 0;
         if (userData.LastPlayedDate != null)
         {
-            var timeSpan = (TimeSpan)(userData.LastPlayedDate - DateTime.Now);
-            var daysSinceLastPlayed = timeSpan.Days;
-            recency = (1 / (1 + Math.Exp(decayRate * daysSinceLastPlayed))) + 0.5;
+            var timeSpan = (TimeSpan)(DateTime.Now - userData.LastPlayedDate);
+            var daysSinceLastPlayed = Math.Max(timeSpan.Days, 0);
+            recency = (1 / (1 + Math.Exp(decayRate * daysSinceLastPlayed)));
         }
         
         // songs that have been listened to a lot may not be super wanted anymore
-        var highPlayDecay = 1 / (1 + Math.Log(-2 + userData.PlayCount, 2));
-
+        var highPlayDecay = 1 / (1 + Math.Log(1 + userData.PlayCount, 2));
         return weights[0] * frequency + weights[1] * recency + weights[2] * highPlayDecay;
     }
 }
