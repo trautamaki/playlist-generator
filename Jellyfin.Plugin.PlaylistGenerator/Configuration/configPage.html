@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="utf-8">
     <title>Template</title>
@@ -33,6 +33,12 @@
                         <input id="PlaylistUserName" name="PlaylistUserName" type="text" is="emby-input" />
                         <div class="fieldDescription">The name of the user that wants the playlist</div>
                     </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel">Select Libraries</label>
+                        <div id="LibraryCheckboxes"></div>
+                        <div class="fieldDescription">Choose the libraries to source music from</div>
+                    </div>
+
                     <div class="selectContainer">
                         <label class="selectLabel" for="ExplorationCoefficient">Exploration Coefficient</label>
                         <select is="emby-select" id="ExplorationCoefficient" name="ExplorationCoefficient" class="emby-select-withcolor emby-select">
@@ -63,7 +69,9 @@
             var TemplateConfig = {
                 pluginUniqueId: '975dde10-724f-4b72-8efc-91a1cb2d9510'
             };
-
+            
+            var selectedLibraries = []            
+            
             document.querySelector('#TemplateConfigPage')
                 .addEventListener('pageshow', function() {
                     Dashboard.showLoadingMsg();
@@ -71,6 +79,8 @@
                         document.querySelector('#PlaylistName').value = config.PlaylistName;
                         document.querySelector('#PlaylistDuration').value = config.PlaylistDuration;
                         document.querySelector('#PlaylistUserName').value = config.PlaylistUserName;
+                        console.log(config.SelectedLibraryIds)
+                        selectedLibraries = config.SelectedLibraryIds;
                         document.querySelector('#ExplorationCoefficient').value = config.ExplorationCoefficient;
                         document.querySelector('#ExcludeTime').value = config.ExcludeTime;
                         document.querySelector('#ExperimentalFilter').checked = config.ExperimentalFilter;
@@ -78,6 +88,25 @@
                     });
                 });
 
+            ApiClient.getJSON(ApiClient.getUrl("Library/VirtualFolders"))
+                .then(function (libraries) {
+                    var container = document.querySelector('#LibraryCheckboxes');
+                    container.innerHTML = '';
+
+                    libraries.forEach(function (lib) {
+                        if (lib.CollectionType === 'music') {
+                            var id = 'lib' + lib.ItemId;
+                            var checked = (selectedLibraries || []).includes(lib.ItemId) ? 'checked' : '';
+                            var html =
+                                '<label class="emby-checkbox-label">' +
+                                '<input is="emby-checkbox" type="checkbox" id="' + id + '" value="' + lib.ItemId + '" ' + checked + ' />' +
+                                '<span>' + lib.Name + '</span>' +
+                                '</label>';
+                            container.insertAdjacentHTML('beforeend', html);
+                        }
+                    });
+                });
+            
             document.querySelector('#TemplateConfigForm')
                 .addEventListener('submit', function(e) {
                 Dashboard.showLoadingMsg();
@@ -85,6 +114,7 @@
                     config.PlaylistName = document.querySelector('#PlaylistName').value;
                     config.PlaylistDuration = document.querySelector('#PlaylistDuration').value;
                     config.PlaylistUserName = document.querySelector('#PlaylistUserName').value;
+                    config.SelectedLibraryIds = Array.from(document.querySelectorAll('#LibraryCheckboxes input[type="checkbox"]:checked')).map(cb => cb.value);
                     config.ExplorationCoefficient = document.querySelector('#ExplorationCoefficient').value;
                     config.ExcludeTime = document.querySelector('#ExcludeTime').value;
                     config.ExperimentalFilter = document.querySelector('#ExperimentalFilter').checked;

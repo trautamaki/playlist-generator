@@ -1,3 +1,4 @@
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Configuration
@@ -13,6 +14,8 @@ namespace Jellyfin.Plugin.PlaylistGenerator.Configuration
         public string PlaylistName { get; set; } = "My Personal Mix";
 
         public string PlaylistUserName { get; set; } = "username";
+        
+        public List<Guid> SelectedLibraryIds { get; set; } = [];
 
         public double ExplorationCoefficient { get; set; } = 3;
 

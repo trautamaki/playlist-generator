@@ -74,15 +74,22 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
             .OfType<Folder>()
             .ToList();
         
+        
         var musicLibraries = allFolders.Select(folder => folder as ICollectionFolder)
             .Where(collectionFolder => collectionFolder?.CollectionType == CollectionType.music).ToList();
-
+        
+        var selectedLibraries = musicLibraries
+            .Where(cf => Config.SelectedLibraryIds.Contains(cf!.Id))
+            .ToList();
+        
+        _logger.LogInformation($"Generating playlist from libraries: {string.Join(", ", selectedLibraries.Select(l => l.Name))}");
+        
         // first get all songs
         var songList = new List<ScoredSong>();
 
         // search for songs in the music libraries
         var allAudio = new List<BaseItem>();
-        foreach (var library in musicLibraries)
+        foreach (var library in selectedLibraries)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (library == null)
