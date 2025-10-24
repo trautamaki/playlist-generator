@@ -2,9 +2,8 @@ using System.Runtime.InteropServices.ComTypes;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Entities;
 
-using Jellyfin.Data.Entities;
-
 using Jellyfin.Data.Enums;
+using Jellyfin.Database.Implementations.Entities;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Objects;
 
@@ -17,9 +16,10 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         List<ScoredSong> recommendations = [];
         foreach (ScoredSong song in songBasis)
         {
+            
             var query = new InternalItemsQuery
             {
-                SimilarTo = song.Song,
+                AlbumIds = [song.AlbumId],
                 Limit = 3,
                 IncludeItemTypes = [BaseItemKind.Audio]
             };
@@ -97,7 +97,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         };
         var favouriteSongs = libraryManager.GetItemList(query);
         
-        favouriteSongs = favouriteSongs.Where(song => song.IsFavoriteOrLiked(user)).ToList();
+        favouriteSongs = favouriteSongs.Where(song => song.IsFavoriteOrLiked(user, null)).ToList();
         
         var potentialSongs = favouriteSongs.Select(song => 
             new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList();

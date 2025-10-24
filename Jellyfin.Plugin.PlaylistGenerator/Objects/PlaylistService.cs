@@ -3,9 +3,9 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Playlists;
 using MediaBrowser.Controller.Playlists;
 
-using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using System.Collections;
+using Jellyfin.Database.Implementations.Entities;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Objects;
 

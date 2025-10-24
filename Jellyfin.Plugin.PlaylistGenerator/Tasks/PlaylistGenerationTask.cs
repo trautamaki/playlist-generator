@@ -5,13 +5,10 @@ using MediaBrowser.Model.Tasks;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Entities;
 
-using Jellyfin.Data.Entities;
-using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Playlists;
 using Jellyfin.Plugin.PlaylistGenerator.Objects;
 using MediaBrowser.Controller;
-using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Model.IO;
 
 namespace Jellyfin.Plugin.PlaylistGenerator.Tasks;
@@ -34,8 +31,6 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
     private readonly IServerApplicationPaths _paths = applicationPaths;
     private readonly IFileSystem _fileSystem = fileSystem;
     private ActivityDatabase _activityDatabase = null!;
-
-
 
     public string Name => "Generate Personal Playlist";
     public string Key => "PlaylistGenerationTask";
@@ -183,7 +178,7 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
             // Example trigger: Run every day at midnight
             new TaskTriggerInfo
             {
-                Type = TaskTriggerInfo.TriggerDaily,
+                Type = TaskTriggerInfoType.DailyTrigger,
                 TimeOfDayTicks = TimeSpan.FromHours(0).Ticks
             }
         ];

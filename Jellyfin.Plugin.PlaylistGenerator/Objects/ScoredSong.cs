@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
+using Jellyfin.Database.Implementations.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Entities;
-using Jellyfin.Data.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using Microsoft.Extensions.Logging;
 
