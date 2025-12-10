@@ -12,7 +12,7 @@
         "version": "1.4.1.0",
         "changelog": "Added Jellyfin 10.11.0 compatability",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/Eeeeelias/playlist-generator/releases/download/v1.4.1.0/v1.4.1.0-release.zip",
+        "sourceUrl": "https://github.com/Eeeeelias/playlist-generator/releases/download/v1.4.1.0/PlaylistGenerator_1.4.1.0.zip",
         "checksum": "c315035ece2c18b511f7372563002501",
         "timestamp": "2025-10-24T15:47:12Z"
       },
