@@ -19,7 +19,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
             
             var query = new InternalItemsQuery
             {
-                AlbumIds = [song.AlbumId],
+                Genres =  [.. song.Song.Genres],
                 Limit = 3,
                 IncludeItemTypes = [BaseItemKind.Audio]
             };
