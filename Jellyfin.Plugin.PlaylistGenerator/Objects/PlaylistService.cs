@@ -61,20 +61,21 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
         return assembledPlaylist;
     }
 
-    public static List<T> GentleShuffle<T>(List<T> array, int k)
+    public static List<T> GentleShuffle<T>(List<T> array, int k, bool ignoreFirst)
     {
         Random random = new();
         List<T> shuffledArray = new(array);
         HashSet<int> usedIndices = [];
         var n = array.Count;
+        var start = ignoreFirst ? 9 : 0;
 
-        for (int i = 0; i < n; i++)
+        for (int i = start; i < n; i++)
         {
-            var availableIndices = new HashSet<int>(Enumerable.Range(Math.Max(0, i - k),
-                Math.Min(n, i + k + 1) - Math.Max(0, i - k)));
+            var availableIndices = new HashSet<int>(Enumerable.Range(Math.Max(start, i - k),
+                Math.Min(n, i + k + 1) - Math.Max(start, i - k)));
             availableIndices.ExceptWith(usedIndices);
-            var nextAvailableIndices = new HashSet<int>(Enumerable.Range(Math.Max(0, i + 1 - k),
-                Math.Min(n, i + 1 + k + 1) - Math.Max(0, i + 1 - k)));
+            var nextAvailableIndices = new HashSet<int>(Enumerable.Range(Math.Max(start, i + 1 - k),
+                Math.Min(n, i + 1 + k + 1) - Math.Max(start, i + 1 - k)));
             nextAvailableIndices.ExceptWith(usedIndices);
 
             if (availableIndices.Count == 0 || (nextAvailableIndices.Count == 0 && i < n - 1))

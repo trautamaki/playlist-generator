@@ -45,7 +45,6 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         var query = new InternalItemsQuery
         {
             ArtistIds = [.. allArtists],
-            Limit = 50,
             IncludeItemTypes = [BaseItemKind.Audio]
         };
 
@@ -55,7 +54,9 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         
         potentialSongs = experimentalRecommend ? FilterByExplorationExperimental(potentialSongs) : FilterByExploration(potentialSongs);
         
-        recommendations.AddRange(potentialSongs);
+        var selectedSongs = potentialSongs.OrderByDescending(song => song.Score).Take(50);
+        
+        recommendations.AddRange(selectedSongs);
 
         return recommendations;
     }
@@ -73,7 +74,6 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         var query = new InternalItemsQuery
         {
             Genres = [.. allGenres],
-            Limit = 50,
             IncludeItemTypes = [BaseItemKind.Audio]
         };
 
@@ -82,8 +82,11 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
             new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList();
         
         potentialSongs = experimentalRecommend ? FilterByExplorationExperimental(potentialSongs) : FilterByExploration(potentialSongs);
+        
+        // order potential songs by score and return first 50
+        var selectedSongs = potentialSongs.OrderByDescending(song => song.Score).Take(50);
 
-        recommendations.AddRange(potentialSongs);
+        recommendations.AddRange(selectedSongs);
         return recommendations;
     }
 
