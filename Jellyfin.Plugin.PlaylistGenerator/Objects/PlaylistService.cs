@@ -15,7 +15,8 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
     private readonly IPlaylistManager _playlistManager = playlistManager;
     private readonly ILibraryManager _libraryManager = libraryManager;
 
-    public static List<ScoredSong> AssemblePlaylist(List<ScoredSong> songs, int maxLength, Recommender recommender, User user)
+    public static List<ScoredSong> AssemblePlaylist(List<ScoredSong> songs, int maxLength, Recommender recommender, 
+        User user, CancellationToken token)
     {
         int maxLengthSeconds = maxLength * 60;
         int totalSeconds = 0;
@@ -31,6 +32,7 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
                 continue;
             }
 
+            token.ThrowIfCancellationRequested();
             assembledPlaylist.Add(songs[i]);
             totalSeconds += (int)((long)(songs[i].Song.RunTimeTicks ?? 0) / TimeSpan.TicksPerSecond);
             seenGuids.Add(songs[i].Song.Id);
@@ -44,8 +46,11 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
         {
             // if we run out of recommendations we just fill it up with songs similar to the ones
             // we already have in the playlist
+            int c = 0;
             while (totalSeconds < maxLengthSeconds)
             {
+                c++;
+                if (c > 1000) break; // break if there seem to be no additional songs.
                 List<ScoredSong> randomFiller = recommender.RecommendSimilar(
                     [assembledPlaylist[new Random().Next(0, assembledPlaylist.Count)]], user);
                 foreach (ScoredSong filler in randomFiller)
@@ -114,15 +119,9 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
         var playlist = _playlistManager.CreatePlaylist(request);
     }
 
-    public void RemovePlaylist(string playlistName)
+    public void RemovePlaylist(List<Playlist> playlists, string playlistName, Guid currentUserId)
     {
-        // Find the playlist by name
-        var playlists = _libraryManager.GetItemList(new InternalItemsQuery
-        {
-            IncludeItemTypes = [BaseItemKind.Playlist]
-        });
-
-        var playlist = playlists.FirstOrDefault(p => p.Name.Equals(playlistName));
+        var playlist = playlists.FirstOrDefault(p => p.Name.Equals(playlistName) && p.OwnerUserId == currentUserId);
 
         if (playlist == null) return;
         // Delete the playlist

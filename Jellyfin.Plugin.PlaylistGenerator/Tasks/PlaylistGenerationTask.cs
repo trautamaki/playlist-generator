@@ -1,3 +1,6 @@
+using Microsoft.VisualBasic.FileIO;
+using System.IO;
+
 using System.Runtime.InteropServices;
 using Jellyfin.Plugin.PlaylistGenerator.Configuration;
 using Microsoft.Extensions.Logging;
@@ -38,7 +41,7 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
     public string Description => "Generate a playlist based on previous listen data + similarity.";
     public string Category => "Library";
 
-    private List<ICollectionFolder?> GetLibraries(User currentUser)
+    private List<ICollectionFolder?>? GetLibraries(User currentUser)
     {
         // get all libraries and then filter for music libraries
         var allFolders = _libraryManager.GetUserRootFolder()
@@ -120,7 +123,7 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
 
         _logger.LogInformation($"Highest score: {allSongs[0].Score} for song: {allSongs[0].Song.Name}");
         var assembledPlaylist = PlaylistService.AssemblePlaylist(allSongs, Config.PlaylistDuration, 
-            playlistRecommender, currentUser);
+            playlistRecommender, currentUser, token);
         assembledPlaylist = PlaylistService.GentleShuffle(assembledPlaylist, 10, true);
         return assembledPlaylist;
     }
@@ -128,14 +131,15 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
     private void HandleJellyPlaylist(List<ScoredSong> assembledPlaylist, User currentUser)
     {
         // check if playlist exists
-        var allPlaylists = _libraryManager.GetItemList(new InternalItemsQuery{IncludeItemTypes = 
+        var playlists = _libraryManager.GetItemList(new InternalItemsQuery{IncludeItemTypes = 
             [BaseItemKind.Playlist]});
         PlaylistService playlistServer = new(_playlistManager, _libraryManager);
+        var allPlaylists = playlists.Cast<Playlist>().ToList();
 
-        if (allPlaylists.Any(playlist => playlist.Name.Equals(Config.PlaylistName))) 
+        if (allPlaylists.Any(p => p.Name.Equals(Config.PlaylistName) && p.OwnerUserId == currentUser.Id)) 
         {
-            _logger.LogInformation($"Playlist {Config.PlaylistName} exists. Overwriting.");
-            playlistServer.RemovePlaylist(Config.PlaylistName);
+            _logger.LogInformation($"Playlist {Config.PlaylistName} of {currentUser.Username} exists. Overwriting.");
+            playlistServer.RemovePlaylist(allPlaylists, Config.PlaylistName, currentUser.Id);
         }
 
         // make the playlist
@@ -156,45 +160,64 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
             _logger.LogError(ex, "Error while generating the playlist.");
             return Task.CompletedTask;
         }
-
-        _logger.LogInformation($"Start generating playlist with Exploration {Config.ExplorationCoefficient} " +
-                               $"for {Config.PlaylistUserName}");
         
         // get user to identify listen data
-        var currentUser = _userManager.GetUserByName(Config.PlaylistUserName);
+        using var reader = new StringReader(Config.PlaylistUserName);
+        using var parser = new TextFieldParser(reader);
 
-        if (currentUser == null)
+        parser.SetDelimiters(";");
+        parser.HasFieldsEnclosedInQuotes = true;
+
+        var users = parser.ReadFields();
+        if (users == null)
         {
-            _logger.LogWarning($"User: {Config.PlaylistUserName} not found. Aborting.");
+            _logger.LogError("No users found.");
             return Task.CompletedTask;
         }
 
-        var selectedLibraries = GetLibraries(currentUser);
-
-        // search for songs in the music libraries
-        var allAudio = GetAllSongs(selectedLibraries, cancellationToken);
-
-        if (allAudio.Count <= 0)
+        foreach (var user in users)
         {
-            _logger.LogWarning("No music found.");
-            return Task.CompletedTask;
-        }
+            var currentUser = _userManager.GetUserByName(user);
+            
+            if (currentUser == null)
+            {
+                _logger.LogWarning($"User: {user} not found. Aborting.");
+                continue;
+            }
+            _logger.LogInformation($"Start generating playlist with Exploration {Config.ExplorationCoefficient} " +
+                                   $"for {currentUser.Username}");
+
+            var selectedLibraries = GetLibraries(currentUser);
+            if (selectedLibraries == null)
+            {
+                continue;
+            }
+
+            // search for songs in the music libraries
+            var allAudio = GetAllSongs(selectedLibraries, cancellationToken);
+
+            if (allAudio.Count <= 0)
+            {
+                _logger.LogWarning("No music found.");
+                continue;
+            }
         
-        // filter out theme songs and songs that are too short
-        var noThemeSongs = allAudio.Where(song => song.IsThemeMedia == false).ToList();
-        var songs = noThemeSongs.Where(song => (int)((long)(song.RunTimeTicks ?? 0) / TimeSpan.TicksPerSecond) > Config.ExcludeTime).ToList();
+            // filter out theme songs and songs that are too short
+            var noThemeSongs = allAudio.Where(song => song.IsThemeMedia == false).ToList();
+            var songs = noThemeSongs.Where(song => (int)((long)(song.RunTimeTicks ?? 0) / TimeSpan.TicksPerSecond) > Config.ExcludeTime).ToList();
         
-        if (songs.Count <= 0)
-        {
-            _logger.LogWarning("No music found after filtering.");
-            return Task.CompletedTask;
-        }
+            if (songs.Count <= 0)
+            {
+                _logger.LogWarning("No music found after filtering.");
+                continue;
+            }
     
-        _logger.LogInformation($"Found {allAudio.Count} songs, filtering out theme songs and short songs...{songs.Count} remaining.");
-        var assembledPlaylist = BuildPlaylist(songs, currentUser, cancellationToken);
+            _logger.LogInformation($"Found {allAudio.Count} songs, filtering out theme songs and short songs...{songs.Count} remaining.");
+            var assembledPlaylist = BuildPlaylist(songs, currentUser, cancellationToken);
         
-        HandleJellyPlaylist(assembledPlaylist, currentUser);
-        _logger.LogInformation($"Generated personal playlist for {currentUser.Username}.");
+            HandleJellyPlaylist(assembledPlaylist, currentUser);
+            _logger.LogInformation($"Generated personal playlist for {currentUser.Username}.");   
+        }
         
         return Task.CompletedTask;
     }
