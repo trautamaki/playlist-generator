@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/Eeeeelias/playlist-generator/refs/heads/main/images/logo.png",
     "versions": [
       {
+        "version": "1.4.3.0",
+        "changelog": "Add multiuser support",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Eeeeelias/playlist-generator/releases/download/v1.4.3.0/PlaylistGenerator_1.4.3.0.zip",
+        "checksum": "9aeb65a15ce1a6efd5cd3ddd344d12ba",
+        "timestamp": "2026-01-04T12:42:27Z"
+      },
+      {
         "version": "1.4.2.1",
         "changelog": "Add Assembly Version",
         "targetAbi": "10.11.0.0",
