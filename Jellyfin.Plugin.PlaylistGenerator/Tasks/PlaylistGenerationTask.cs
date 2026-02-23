@@ -100,7 +100,11 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
             token.ThrowIfCancellationRequested();
             songList.Add(new ScoredSong(song, currentUser, _userDataManager, _libraryManager, _activityDatabase));
         }
-
+        
+        // remove songs from song list where scored song is disliked
+        var origLen = songList.Count;
+        songList = songList.Where(song => !song.IsDisliked).ToList();
+        
         // initialise the Recommenders and get some recommendations based on our top
         var experimentalFilter = Config.ExperimentalFilter;
         Recommender playlistRecommender = new(_libraryManager, _userDataManager, _activityDatabase, Config.ExplorationCoefficient);
@@ -117,9 +121,10 @@ public class PlaylistGenerationTask(ILibraryManager libraryManager,
         allSongs.AddRange(similarByArtist);
         allSongs.AddRange(favouriteSongs);
         
-        // prune songs that are too short or have no ParentId 
+        // prune songs that are too short, have no ParentId or are disliked
         allSongs = allSongs.Where(song => (song.Song.RunTimeTicks ?? 0 / TimeSpan.TicksPerSecond) >= Config.ExcludeTime 
-                                          && song.Song.ParentId != Guid.Empty).ToList();
+                                          && song.Song.ParentId != Guid.Empty
+                                          && !song.IsDisliked).ToList();
 
         _logger.LogInformation($"Highest score: {allSongs[0].Score} for song: {allSongs[0].Song.Name}");
         var assembledPlaylist = PlaylistService.AssemblePlaylist(allSongs, Config.PlaylistDuration, 

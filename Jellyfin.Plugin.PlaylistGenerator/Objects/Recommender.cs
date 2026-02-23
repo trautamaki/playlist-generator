@@ -11,6 +11,22 @@ namespace Jellyfin.Plugin.PlaylistGenerator.Objects;
 public class Recommender(ILibraryManager libraryManager, IUserDataManager userDataManager, 
     ActivityDatabase activityDatabase, double explorationCoefficient = 3)
 {
+    private List<BaseItem> TakeRandom(List<BaseItem> list, int n)
+    {
+        if (n < 0 || n > list.Count)
+            throw new ArgumentOutOfRangeException(nameof(n));
+
+        var rng = Random.Shared;
+
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+
+        return list.Take(n).ToList();
+    }
+    
     public List<ScoredSong> RecommendSimilar(List<ScoredSong> songBasis, User user)
     {
         List<ScoredSong> recommendations = [];
@@ -20,11 +36,12 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
             var query = new InternalItemsQuery
             {
                 Genres =  [.. song.Song.Genres],
-                Limit = 3,
+                Limit = 10,
                 IncludeItemTypes = [BaseItemKind.Audio]
             };
 
-            var similarSongs = libraryManager.GetItemList(query);
+            var similarSongs = libraryManager.GetItemList(query).ToList();
+            similarSongs = TakeRandom(similarSongs, 3);
             recommendations.AddRange(similarSongs.Select(song => 
                 new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList());
         }

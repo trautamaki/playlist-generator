@@ -55,7 +55,7 @@ public class PlaylistService(IPlaylistManager playlistManager, ILibraryManager l
                     [assembledPlaylist[new Random().Next(0, assembledPlaylist.Count)]], user);
                 foreach (ScoredSong filler in randomFiller)
                 {
-                    if (seenGuids.Contains(filler.Song.Id) || filler.Song.ParentId == Guid.Empty) continue;
+                    if (seenGuids.Contains(filler.Song.Id) || filler.Song.ParentId == Guid.Empty || filler.IsDisliked) continue;
                     
                     assembledPlaylist.Add(filler);
                     totalSeconds += (int)((long)(filler.Song.RunTimeTicks ?? 0) / TimeSpan.TicksPerSecond);
