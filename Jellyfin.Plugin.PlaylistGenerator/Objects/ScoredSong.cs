@@ -34,7 +34,7 @@ public class ScoredSong : BaseItem
         Score = CalculateScore();
         AlbumId = song.ParentId;
         ArtistId = GetAristId(song);
-        IsDisliked = false; // calculate this later
+        IsDisliked = DislikeStatus(); // skipped three or more times last month
     }
     
     private double GetNormalizedPlaysSevenDays()
@@ -69,6 +69,24 @@ public class ScoredSong : BaseItem
         return album == null ? Guid.Empty : _libraryManager.GetArtist(album.AlbumArtist).Id;
     }
 
+    private bool DislikeStatus(int neededSkips = 3)
+    {
+        var songLengthSeconds = Song.RunTimeTicks / TimeSpan.TicksPerSecond;
+        
+        var sql = $"""
+                   SELECT PlayDuration FROM PlaybackActivity
+                   WHERE ItemId = '{Song.Id:N}' AND UserId = '{User.Id:N}' AND DateCreated > datetime('now', '-30 days')
+                   """;
+        var result = _activityDatabase.ExecuteQuery(sql);
+        var skipped = 0;
+        foreach (var row in result)
+        {
+            skipped += int.Parse(row["Column0"]) >= songLengthSeconds * 0.8 ? 0 : 1;
+        }
+        
+        return skipped >= neededSkips;
+    }
+    
     private double CalculateScore(double decayRate = 0.5, List<double>? weights = null, int minPlayThreshold = 3)
     {
         weights ??= [0.6, 0.25, 0.15];
