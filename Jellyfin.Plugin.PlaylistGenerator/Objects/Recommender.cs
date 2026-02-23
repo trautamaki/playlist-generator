@@ -118,6 +118,7 @@ public class Recommender(ILibraryManager libraryManager, IUserDataManager userDa
         var favouriteSongs = libraryManager.GetItemList(query);
         
         favouriteSongs = favouriteSongs.Where(song => song.IsFavoriteOrLiked(user, null)).ToList();
+        favouriteSongs = TakeRandom(favouriteSongs.ToList(), 5); // max 5 favourite songs
         
         var potentialSongs = favouriteSongs.Select(song => 
             new ScoredSong(song, user, userDataManager, libraryManager, activityDatabase)).ToList();
