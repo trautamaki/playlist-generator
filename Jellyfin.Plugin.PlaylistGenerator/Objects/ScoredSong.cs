@@ -71,6 +71,8 @@ public class ScoredSong : BaseItem
 
     private bool DislikeStatus(int neededSkips = 3)
     {
+        if (Score == 0.0) return false;
+            
         var songLengthSeconds = Song.RunTimeTicks / TimeSpan.TicksPerSecond;
         
         var sql = $"""
